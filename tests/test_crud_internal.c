@@ -1559,7 +1559,7 @@ void err_retrieveObject_cloud_statusNULL()
 	memset(respMsg, 0, sizeof(wrp_msg_t));
 	ParodusCfg cfg;
 	memset(&cfg,0,sizeof(cfg));
-	cfg.cloud_status = NULL;
+	cfg.cloud_status = NULL;	
 	cfg.crud_config_file = strdup("parodus_cfg.json");
 	set_parodus_cfg(&cfg);
 	testdata=strdup("{\"tags\":{\"test1\":{\"expires\":1522451870}}}");

@@ -65,7 +65,7 @@ ParodusCfg *get_parodus_cfg(void)
 
 void set_parodus_cfg(ParodusCfg *cfg) 
 {
-    memcpy(&parodusCfg, cfg, sizeof(ParodusCfg));
+    	memcpy(&parodusCfg, cfg, sizeof(ParodusCfg));	
 }
 
 void set_cloud_disconnect_reason(ParodusCfg *cfg, char *disconn_reason)
@@ -87,7 +87,7 @@ void set_cloud_status(char *status)
         if(strcmp (status, CLOUD_STATUS_ONLINE) == 0)
         {
               pthread_cond_signal(&cloud_status_cond);
-        }
+       	}
         pthread_mutex_unlock(&config_mut);
     }
 }
@@ -95,7 +95,13 @@ void set_cloud_status(char *status)
 char *get_cloud_status(void)
 {
     pthread_mutex_lock(&config_mut);
-    parStrncpy(cloud_status, get_parodus_cfg()->cloud_status, sizeof(cloud_status));
+    if(get_parodus_cfg()->cloud_status != NULL){
+    	parStrncpy(cloud_status, get_parodus_cfg()->cloud_status, sizeof(cloud_status));
+    }
+    else{
+	pthread_mutex_unlock(&config_mut);
+	return NULL;	
+    }
     pthread_mutex_unlock(&config_mut);	
     return cloud_status;
 }
