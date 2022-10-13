@@ -20,10 +20,13 @@
 #include <setjmp.h>
 #include <cmocka.h>
 #include <nopoll.h>
+#include <cjwt/cjwt.h>
 
 #include "../src/parodus_log.h"
 #include "../src/nopoll_helpers.h"
 #include "../src/config.h"
+#include "../src/connection.h"
+#include "../src/ParodusInternal.h"
 
 /*----------------------------------------------------------------------------*/
 /*                                   Macros                                   */
@@ -34,7 +37,6 @@
 /*                            File Scoped Variables                           */
 /*----------------------------------------------------------------------------*/
  static noPollConn *conn = NULL;
- static ParodusCfg cfg;
  
 /*----------------------------------------------------------------------------*/
 /*                                   Mocks                                    */
@@ -55,12 +57,6 @@ nopoll_bool nopoll_conn_is_ready( noPollConn *conn )
 	check_expected((intptr_t)conn);
 	
     return (nopoll_bool)mock();
-}
-
-ParodusCfg *get_parodus_cfg(void)
-{
-	function_called();
-    return &cfg;
 }
 
 int  __nopoll_conn_send_common (noPollConn * conn, const char * content, long length, nopoll_bool  has_fin, long       sleep_in_header, noPollOpCode frame_type)
@@ -129,11 +125,6 @@ int kill(pid_t pid, int sig)
 bool get_interface_down_event()
 {
      return false;
-}
-
-char *get_cloud_status(void)
-{
-     return NULL;
 }
 
 /*----------------------------------------------------------------------------*/
@@ -225,9 +216,7 @@ void err_sendResponseConnNull()
 void test_sendMessage()
 {
     int len = strlen("Hello Parodus!");
-    
-    cfg.cloud_status = CLOUD_STATUS_ONLINE;
-    expect_function_calls (get_parodus_cfg, 1);
+    get_parodus_cfg()->cloud_status = CLOUD_STATUS_ONLINE; 
     
     expect_value(__nopoll_conn_send_common, (intptr_t)conn, (intptr_t)conn);
     expect_value(__nopoll_conn_send_common, length, len);
@@ -240,9 +229,7 @@ void test_sendMessage()
 void test_sendMessageOffline()
 {
     int len = strlen("Hello Parodus!");
-    
-    cfg.cloud_status = CLOUD_STATUS_OFFLINE;
-    expect_function_calls (get_parodus_cfg, 1);
+    get_parodus_cfg()->cloud_status = CLOUD_STATUS_OFFLINE;    
     sendMessage(conn, "Hello Parodus!", len);
     
 }
@@ -251,9 +238,7 @@ void err_sendMessage()
 {
     int len = strlen("Hello Parodus!");
     
-    cfg.cloud_status = CLOUD_STATUS_ONLINE;
-    expect_function_calls (get_parodus_cfg, 1);
-
+    get_parodus_cfg()->cloud_status = CLOUD_STATUS_ONLINE;
     expect_value(__nopoll_conn_send_common, (intptr_t)conn,(intptr_t) conn);
     expect_value(__nopoll_conn_send_common, length, len);
     will_return(__nopoll_conn_send_common, len-2);
@@ -271,9 +256,7 @@ void err_sendMessageConnNull()
 {
     int len = strlen("Hello Parodus!");
     
-    cfg.cloud_status = CLOUD_STATUS_ONLINE;
-    expect_function_calls (get_parodus_cfg, 1);
-
+    get_parodus_cfg()->cloud_status = CLOUD_STATUS_ONLINE;
     expect_value(__nopoll_conn_send_common, (intptr_t)conn, NULL);
     expect_value(__nopoll_conn_send_common, length, len);
     will_return(__nopoll_conn_send_common, len);

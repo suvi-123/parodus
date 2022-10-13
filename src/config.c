@@ -95,8 +95,16 @@ void set_cloud_status(char *status)
 char *get_cloud_status(void)
 {
     pthread_mutex_lock(&config_mut);
-    parStrncpy(cloud_status, get_parodus_cfg()->cloud_status, sizeof(cloud_status));
-    pthread_mutex_unlock(&config_mut);	
+    if(get_parodus_cfg()->cloud_status != NULL)
+    {
+    	parStrncpy(cloud_status, get_parodus_cfg()->cloud_status, sizeof(cloud_status));
+    }
+    else
+    {
+    	pthread_mutex_unlock(&config_mut);	
+	return NULL;
+    }
+    pthread_mutex_unlock(&config_mut);
     return cloud_status;
 }
 
