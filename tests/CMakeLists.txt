@@ -33,7 +33,7 @@ set (PARODUS_COMMON_LIBS ${PARODUS_COMMON_LIBS} -lucresolv -lresolv)
 endif (FEATURE_DNS_QUERY)
 
 if (ENABLE_WEBCFGBIN)
-set (PARODUS_COMMON_LIBS ${PARODUS_COMMON_LIBS} -lrbus -lrbus-core)
+	set (PARODUS_COMMON_LIBS ${PARODUS_COMMON_LIBS} -lrbus -lrbuscore -lrtMessage)
 endif (ENABLE_WEBCFGBIN)
 
 if(NOT DISABLE_VALGRIND)
@@ -49,19 +49,27 @@ add_test(NAME test_heartBeatTimer COMMAND ${MEMORY_CHECK} ./test_heartBeatTimer)
 add_executable(test_heartBeatTimer test_heartBeatTimer.c ../src/heartBeat.c ../src/time.c)
 target_link_libraries (test_heartBeatTimer ${PARODUS_COMMON_LIBS} -lcmocka)
 
+#target_link_libraries (test_heartBeatTimer -lcmocka gcov -lcunit -lcimplog
+# -lwrp-c -luuid -lpthread -lmsgpackc -lnopoll
+#-Wl,--no-as-needed -lcjson -lcjwt -ltrower-base64
+#-lssl -lcrypto -lrt -lm)
+
+
 #-------------------------------------------------------------------------------
 #   test_close_retry
 #-------------------------------------------------------------------------------
 add_test(NAME test_close_retry COMMAND ${MEMORY_CHECK} ./test_close_retry)
 add_executable(test_close_retry test_close_retry.c ../src/close_retry.c)
-target_link_libraries (test_close_retry ${PARODUS_COMMON_LIBS} -lcmocka)
+#target_link_libraries (test_close_retry ${PARODUS_COMMON_LIBS} -lcmocka)
+
+target_link_libraries (test_close_retry -lcmocka gcov -lcunit -lcimplog -lwrp-c -luuid -lpthread -lmsgpackc -lnopoll -Wl,--no-as-needed -lcjson -lcjwt -ltrower-base64 -lssl -lcrypto -lrt -lm -lrbus -lrbuscore -lrtMessage)
 
 #-------------------------------------------------------------------------------
 #   test_mutex
 #-------------------------------------------------------------------------------
 add_test(NAME test_mutex COMMAND ${MEMORY_CHECK} ./test_mutex)
 add_executable(test_mutex test_mutex.c ../src/mutex.c)
-target_link_libraries (test_mutex ${PARODUS_COMMON_LIBS} -lcmocka)
+target_link_libraries (test_mutex gcov ${PARODUS_COMMON_LIBS}  -lcmocka)
 
 #-------------------------------------------------------------------------------
 #   test_networking
@@ -74,8 +82,8 @@ target_link_libraries (test_networking ${PARODUS_COMMON_LIBS})
 #   test_nopoll_helpers
 #-------------------------------------------------------------------------------
 add_test(NAME test_nopoll_helpers COMMAND ${MEMORY_CHECK} ./test_nopoll_helpers)
-add_executable(test_nopoll_helpers test_nopoll_helpers.c ../src/nopoll_helpers.c)
-target_link_libraries (test_nopoll_helpers -Wl,--no-as-needed -lrt -lcmocka -lcimplog -lnopoll)
+add_executable(test_nopoll_helpers test_nopoll_helpers.c ../src/nopoll_helpers.c ../src/string_helpers.c ../src/config.c)
+target_link_libraries (test_nopoll_helpers -Wl,--no-as-needed -lrt -lcmocka -lcimplog -lnopoll ${PARODUS_COMMON_LIBS})
 
 #-------------------------------------------------------------------------------
 #   test_time
@@ -406,3 +414,10 @@ add_executable(simple ${SIMPLE_SRC})
 
 target_link_libraries (simple ${PARODUS_CONN_LIBS} ${PARODUS_COMMON_LIBS}  gcov -lnopoll )
 endif (INTEGRATION_TESTING)
+
+#-------------------------------------------------------------------------------
+#   test_xmidt_send_msg
+#------------------------------------------------------------------------------
+add_test(NAME test_xmidt_send_msg COMMAND ${MEMORY_CHECK} ./test_xmidt_send_msg)
+add_executable(test_xmidt_send_msg test_xmidt_send_msg.c)
+target_link_libraries(test_xmidt_send_msg -lrbus ${PARODUS_COMMON_LIBS})
