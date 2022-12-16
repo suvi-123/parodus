@@ -409,3 +409,10 @@ add_executable(simple ${SIMPLE_SRC})
 
 target_link_libraries (simple ${PARODUS_CONN_LIBS} ${PARODUS_COMMON_LIBS}  gcov -lnopoll )
 endif (INTEGRATION_TESTING)
+
+#-------------------------------------------------------------------------------
+#   test_xmidt_send_msg
+#------------------------------------------------------------------------------
+add_test(NAME test_xmidt_send_msg COMMAND ${MEMORY_CHECK} ./test_xmidt_send_msg)
+add_executable(test_xmidt_send_msg test_xmidt_send_msg.c)
+target_link_libraries(test_xmidt_send_msg -lrbus ${PARODUS_COMMON_LIBS})
