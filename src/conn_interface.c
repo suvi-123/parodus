@@ -232,7 +232,8 @@ void createSocketConnection(void (* initKeypress)())
     nopoll_cleanup_library();
     curl_global_cleanup();
     clear_metadata();
-    rdk_logger_deinit();
+    //disabling it due to local pc build failure
+    //rdk_logger_deinit();
     free_server_list(&server_list);
 }
 
@@ -242,4 +243,3 @@ void shutdownSocketConnection(char *reason) {
    reset_interface_down_event ();
    terminate_backoff_delay ();
 }
-

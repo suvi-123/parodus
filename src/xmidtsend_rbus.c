@@ -44,6 +44,7 @@ pthread_mutex_t xmidt_mut=PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t xmidt_con=PTHREAD_COND_INITIALIZER;
 
 pthread_mutex_t cloudack_mut=PTHREAD_MUTEX_INITIALIZER;
+int test = 0; //testing
 
 const char * contentTypeList[]={
 "application/json",
@@ -139,8 +140,15 @@ void decrement_XmidtQsize()
 int checkCloudConn()
 {
 	int ret = 1;
-	if (get_close_retry() || !cloud_status_is_online ())
+	//if (get_close_retry() || !cloud_status_is_online ())
+	if (test > 0 && test <=10) //test purpose.
 	{
+		if(test==1)
+		{
+			sleep(5);
+			return 1;
+		}
+		
 		ParodusInfo("close_retry is in progress or cloud status is not online, wait till connection up\n");
 
 		int  rv;
@@ -152,7 +160,16 @@ int checkCloudConn()
 			getCurrentTime(&ts);
 			ts.tv_sec += EXPIRY_CHECK_TIME;
 			ParodusPrint("checkCloudConn timeout at %lld\n", (long long) ts.tv_sec);
-			rv = pthread_cond_timedwait(get_global_cloud_status_cond(), get_global_cloud_status_mut(), &ts);
+			ParodusInfo("Test value is %d\n",test);
+			if(test<=10)
+			{	
+				rv = pthread_cond_timedwait(get_global_cloud_status_cond(), get_global_cloud_status_mut(), &ts);				
+			}
+			else
+			{
+				rv=0;
+				ParodusInfo("rv is set to 0\n");
+			}
 			if (rv == ETIMEDOUT)
 			{
 				ParodusInfo("Timedout. Cloud connection is down for %d minutes, check msg expiry\n", (EXPIRY_CHECK_TIME/60));
@@ -250,20 +267,27 @@ int xmidtQOptmize()
 
 		if(del)
 		{
-			ParodusPrint("msg expired, updateXmidtState to DELETE\n");
-			updateXmidtState(temp, DELETE);
-			//rbus callback to caller
-			if(del == 1)
+			if(temp->state != DELETE)
 			{
-				mapXmidtStatusToStatusMessage(MSG_EXPIRED, &errorMsg);
-				ParodusPrint("statusMsg is %s\n",errorMsg);
-				createOutParamsandSendAck(temp->msg, temp->asyncHandle, errorMsg, MSG_EXPIRED, NULL, RBUS_ERROR_INVALID_RESPONSE_FROM_DESTINATION);
+				ParodusPrint("msg expired, updateXmidtState to DELETE\n");
+				updateXmidtState(temp, DELETE);
+				//rbus callback to caller
+				if(del == 1)
+				{
+					mapXmidtStatusToStatusMessage(MSG_EXPIRED, &errorMsg);
+					ParodusPrint("statusMsg is %s\n",errorMsg);
+					createOutParamsandSendAck(temp->msg, temp->asyncHandle, errorMsg, MSG_EXPIRED, NULL, RBUS_ERROR_INVALID_RESPONSE_FROM_DESTINATION);
+				}
+				else if(del == 2)
+				{
+					mapXmidtStatusToStatusMessage(QUEUE_OPTIMIZED, &errorMsg);
+					ParodusPrint("statusMsg is %s\n",errorMsg);
+					createOutParamsandSendAck(temp->msg, temp->asyncHandle, errorMsg, QUEUE_OPTIMIZED, NULL, RBUS_ERROR_INVALID_RESPONSE_FROM_DESTINATION);
+				}
 			}
-			else if(del == 2)
+			else
 			{
-				mapXmidtStatusToStatusMessage(QUEUE_OPTIMIZED, &errorMsg);
-				ParodusPrint("statusMsg is %s\n",errorMsg);
-				createOutParamsandSendAck(temp->msg, temp->asyncHandle, errorMsg, QUEUE_OPTIMIZED, NULL, RBUS_ERROR_INVALID_RESPONSE_FROM_DESTINATION);
+				ParodusInfo("qos %d transid %s is already in DELETE state\n",tempMsg->u.event.qos, tempMsg->u.event.transaction_uuid);
 			}
 			status = deleteFromXmidtQ(&next_node);
 			temp = next_node;
@@ -1235,6 +1259,7 @@ static rbusError_t sendDataHandler(rbusHandle_t handle, char const* methodName, 
 			//generate transaction id to create outParams and send ack
 			transaction_uuid = generate_transaction_uuid();
 			ParodusInfo("xmidt transaction_uuid generated is %s\n", transaction_uuid);
+			test++; //testing
 			parseRbusInparamsToWrp(inParams, transaction_uuid, &wrpMsg);
 
 			//xmidt send producer
